@@ -1,0 +1,330 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#app{background:#000;min-height:800px;padding:16px;font-family:'Courier New',monospace;position:relative;overflow:hidden}
+canvas#grid{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.tron-title{text-align:center;font-size:11px;letter-spacing:6px;color:#0ff;text-transform:uppercase;margin-bottom:6px}
+.clock{text-align:center;font-size:28px;color:#0ff;letter-spacing:6px;margin-bottom:2px;text-shadow:0 0 10px rgba(0,255,255,0.4)}
+.clock-row{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:2px}
+.ampm{font-size:13px;color:#0088aa;letter-spacing:3px;align-self:flex-end;padding-bottom:4px}
+.clock-day{text-align:center;font-size:9px;color:#006688;letter-spacing:3px;margin-bottom:4px;text-transform:uppercase}
+.rush-tag{display:inline-block;font-size:8px;letter-spacing:2px;padding:2px 8px;border:1px solid #ff6600;color:#ff8800;background:rgba(255,100,0,0.1);text-transform:uppercase;margin-bottom:14px;margin-left:auto;margin-right:auto;display:table}
+.normal-tag{display:inline-block;font-size:8px;letter-spacing:2px;padding:2px 8px;border:1px solid #00aa44;color:#00ff88;background:rgba(0,200,80,0.08);text-transform:uppercase;margin-bottom:14px;display:table;margin-left:auto;margin-right:auto}
+.panel{background:rgba(0,20,30,0.88);border:1px solid #0ff;padding:12px;margin-bottom:10px;position:relative}
+.panel::before{content:'';position:absolute;top:-1px;left:20px;width:40px;height:2px;background:#0ff}
+.panel::after{content:'';position:absolute;bottom:-1px;right:20px;width:40px;height:2px;background:#0ff}
+.panel-label{font-size:9px;letter-spacing:3px;color:#0088aa;margin-bottom:8px;text-transform:uppercase}
+.route-row{display:flex;gap:8px;margin-bottom:10px}
+.route-btn{flex:1;background:rgba(0,255,255,0.05);border:1px solid #0ff;color:#0ff;font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;padding:10px 6px;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center}
+.route-btn:hover{background:rgba(0,255,255,0.15)}
+.route-btn.active{background:rgba(0,255,255,0.2);box-shadow:0 0 12px #0ff,inset 0 0 8px rgba(0,255,255,0.1)}
+.go-btn{width:100%;background:rgba(0,255,255,0.08);border:1px solid #0ff;color:#0ff;font-family:'Courier New',monospace;font-size:10px;padding:11px;cursor:pointer;letter-spacing:4px;text-transform:uppercase;transition:all 0.2s;margin-top:4px}
+.go-btn:hover{background:rgba(0,255,255,0.22);box-shadow:0 0 14px #0ff}
+.go-btn:active{transform:scale(0.98)}
+.options-panel{background:rgba(0,10,20,0.95);border:1px solid #0055aa;padding:12px;margin-bottom:10px;display:none}
+.options-panel.show{display:block}
+.opt-header{font-size:9px;letter-spacing:3px;color:#0066aa;margin-bottom:8px;text-transform:uppercase;border-bottom:1px solid rgba(0,80,150,0.3);padding-bottom:6px}
+.opt-card{background:rgba(0,20,40,0.8);border:1px solid #003366;padding:10px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;position:relative}
+.opt-card:hover{border-color:#0077cc;background:rgba(0,30,60,0.9)}
+.opt-card.selected{border-color:#0ff;background:rgba(0,50,80,0.8)}
+.opt-card.fastest{border-color:#00aa44}
+.opt-card.fastest::before{content:'FASTEST';position:absolute;top:-1px;right:10px;font-size:7px;letter-spacing:2px;color:#00ff88;background:#000;padding:0 4px}
+.opt-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.opt-mins{font-size:18px;color:#0ff;letter-spacing:2px;font-weight:500}
+.opt-mins.slow{color:#ff8800}
+.opt-label{font-size:8px;color:#004477;letter-spacing:2px;text-transform:uppercase}
+.opt-changes{font-size:8px;color:#0077aa;letter-spacing:1px;background:rgba(0,100,150,0.15);border:1px solid #003355;padding:2px 7px;border-radius:2px}
+.opt-legs{display:flex;flex-direction:column;gap:3px}
+.opt-leg{display:flex;align-items:center;gap:6px;font-size:8px;color:#005577;letter-spacing:1px;line-height:1.4}
+.opt-leg-mode{font-size:7px;letter-spacing:1px;padding:1px 5px;border:1px solid;min-width:36px;text-align:center;flex-shrink:0}
+.opt-leg-mode.walk{color:#0ff;border-color:#006666}
+.opt-leg-mode.train{color:#ff8800;border-color:#663300}
+.opt-leg-mode.tube{color:#cc88ff;border-color:#440088}
+.opt-leg-mode.bus{color:#ffcc00;border-color:#665500}
+.opt-leg-desc{color:#0088aa}
+.opt-leg-t{color:#004455;margin-left:auto;flex-shrink:0}
+.arrow{color:#003355;font-size:8px;padding-left:42px}
+.detail-panel{background:rgba(0,10,20,0.95);border:1px solid #ff6600;padding:14px;margin-bottom:10px;display:none}
+.detail-panel.show{display:block}
+.detail-panel::before{content:'';position:absolute;top:-1px;left:20px;width:60px;height:2px;background:#ff6600}
+.res-label{font-size:9px;letter-spacing:3px;color:#cc4400;margin-bottom:10px;text-transform:uppercase}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.res-stat{background:rgba(255,100,0,0.08);border:1px solid #ff6600;padding:10px;text-align:center}
+.res-num{font-size:22px;font-weight:500;color:#ff8800;letter-spacing:2px;line-height:1}
+.res-unit{font-size:9px;color:#cc4400;letter-spacing:2px;margin-top:3px;text-transform:uppercase}
+.res-route{font-size:9px;color:#ff8800;letter-spacing:1px;text-align:center;border-top:1px solid rgba(255,100,0,0.3);padding-top:8px;margin-top:4px}
+.corner{position:absolute;width:8px;height:8px}
+.corner.tl{top:0;left:0;border-top:2px solid #0ff;border-left:2px solid #0ff}
+.corner.tr{top:0;right:0;border-top:2px solid #0ff;border-right:2px solid #0ff}
+.corner.bl{bottom:0;left:0;border-bottom:2px solid #0ff;border-left:2px solid #0ff}
+.corner.br{bottom:0;right:0;border-bottom:2px solid #0ff;border-right:2px solid #0ff}
+@keyframes scanline{0%{top:-2px}100%{top:100%}}
+.scanline{position:absolute;left:0;width:100%;height:2px;background:rgba(0,255,255,0.05);animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.blink{animation:blink 1s infinite}
+</style>
+
+<canvas id="grid"></canvas>
+<div id="app">
+  <div class="scanline"></div>
+  <div style="position:relative;z-index:2">
+    <div class="tron-title">Commute Matrix</div>
+    <div class="clock-row">
+      <div class="clock" id="clock">00:00:00</div>
+      <div class="ampm" id="ampm">AM</div>
+    </div>
+    <div class="clock-day" id="clockday">loading...</div>
+    <div id="rush-indicator"></div>
+
+    <div class="panel">
+      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+      <div class="panel-label">[ select route ]</div>
+      <div class="route-row">
+        <div class="route-btn active" id="btn-hw" onclick="selectRoute('hw')">Home → Work</div>
+        <div class="route-btn" id="btn-wh" onclick="selectRoute('wh')">Work → Home</div>
+      </div>
+      <div style="font-size:9px;color:#004466;letter-spacing:1px;line-height:1.9;margin-bottom:4px">
+        <span style="color:#006688">Origin :</span> <span id="lbl-origin" style="color:#0088aa">Dartford, DA12 RJ</span><br>
+        <span style="color:#006688">Dest &nbsp; :</span> <span id="lbl-dest" style="color:#0088aa">17 Charterhouse St, EC1N 6RA</span>
+      </div>
+      <button class="go-btn" onclick="showOptions()">[ scan all options ]</button>
+    </div>
+
+    <div class="options-panel" id="options-panel">
+      <div class="opt-header" id="opt-header">[ route options — fastest to slowest ]</div>
+      <div id="opt-list"></div>
+    </div>
+
+    <div class="detail-panel" id="detail-panel" style="position:relative">
+      <div class="corner tl" style="border-color:#ff6600"></div><div class="corner tr" style="border-color:#ff6600"></div>
+      <div class="corner bl" style="border-color:#ff6600"></div><div class="corner br" style="border-color:#ff6600"></div>
+      <div class="res-label">[ selected route detail ]</div>
+      <div class="res-grid">
+        <div class="res-stat"><div class="res-num" id="res-time">--</div><div class="res-unit">minutes</div></div>
+        <div class="res-stat"><div class="res-num" id="res-dist">48.2</div><div class="res-unit">km</div></div>
+      </div>
+      <div class="res-route" id="res-route"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentRoute = 'hw';
+
+const ALL_ROUTES = {
+  hw: [
+    {
+      mins: 62, changes: 1, label: 'Direct Thameslink',
+      legs: [
+        {mode:'walk', desc:'Home → Dartford Station', t:'10 min'},
+        {mode:'train', desc:'Dartford → Farringdon (Thameslink direct)', t:'38 min'},
+        {mode:'walk', desc:'Farringdon → 17 Charterhouse St', t:'8 min'},
+        {mode:'walk', desc:'Change at Farringdon', t:'6 min'}
+      ]
+    },
+    {
+      mins: 68, changes: 1, label: 'Southeastern + Thameslink',
+      legs: [
+        {mode:'walk', desc:'Home → Dartford Station', t:'12 min'},
+        {mode:'train', desc:'Dartford → London Bridge (Southeastern)', t:'38 min'},
+        {mode:'tube', desc:'London Bridge → Farringdon (Thameslink)', t:'10 min'},
+        {mode:'walk', desc:'Farringdon → 17 Charterhouse St', t:'8 min'}
+      ]
+    },
+    {
+      mins: 75, changes: 2, label: 'Southeastern + Northern + walk',
+      legs: [
+        {mode:'walk', desc:'Home → Dartford Station', t:'12 min'},
+        {mode:'train', desc:'Dartford → London Bridge (Southeastern)', t:'38 min'},
+        {mode:'tube', desc:'London Bridge → Bank (Northern line)', t:'5 min'},
+        {mode:'tube', desc:'Bank → Barbican (Circle line)', t:'8 min'},
+        {mode:'walk', desc:'Barbican → 17 Charterhouse St', t:'7 min'},
+        {mode:'walk', desc:'Interchanges x2', t:'5 min'}
+      ]
+    },
+    {
+      mins: 90, changes: 2, label: 'Bus via City',
+      legs: [
+        {mode:'walk', desc:'Home → Dartford Station', t:'12 min'},
+        {mode:'train', desc:'Dartford → London Bridge (Southeastern)', t:'38 min'},
+        {mode:'bus', desc:'Bus 153 → Barbican', t:'18 min'},
+        {mode:'walk', desc:'Barbican → 17 Charterhouse St', t:'10 min'},
+        {mode:'walk', desc:'Wait / change', t:'12 min'}
+      ]
+    }
+  ],
+  wh: [
+    {
+      mins: 60, changes: 1, label: 'Direct Thameslink',
+      legs: [
+        {mode:'walk', desc:'17 Charterhouse St → Farringdon Station', t:'7 min'},
+        {mode:'train', desc:'Farringdon → Dartford (Thameslink direct)', t:'40 min'},
+        {mode:'walk', desc:'Dartford Station → Home', t:'10 min'},
+        {mode:'walk', desc:'Change at Farringdon', t:'3 min'}
+      ]
+    },
+    {
+      mins: 65, changes: 1, label: 'Thameslink + Southeastern',
+      legs: [
+        {mode:'walk', desc:'17 Charterhouse St → Farringdon', t:'7 min'},
+        {mode:'tube', desc:'Farringdon → London Bridge (Thameslink)', t:'10 min'},
+        {mode:'train', desc:'London Bridge → Dartford (Southeastern)', t:'38 min'},
+        {mode:'walk', desc:'Dartford Station → Home', t:'12 min'},
+        {mode:'walk', desc:'Change at London Bridge', t:'3 min'}
+      ]
+    },
+    {
+      mins: 78, changes: 2, label: 'Circle + Southeastern',
+      legs: [
+        {mode:'walk', desc:'17 Charterhouse St → Barbican Station', t:'6 min'},
+        {mode:'tube', desc:'Barbican → Monument (Circle line)', t:'8 min'},
+        {mode:'tube', desc:'Monument → London Bridge (walk)', t:'5 min'},
+        {mode:'train', desc:'London Bridge → Dartford (Southeastern)', t:'38 min'},
+        {mode:'walk', desc:'Dartford Station → Home', t:'12 min'},
+        {mode:'walk', desc:'Interchanges x2', t:'9 min'}
+      ]
+    },
+    {
+      mins: 95, changes: 2, label: 'Bus + Southeastern',
+      legs: [
+        {mode:'walk', desc:'17 Charterhouse St → Bus stop', t:'4 min'},
+        {mode:'bus', desc:'Bus 153 → London Bridge', t:'22 min'},
+        {mode:'train', desc:'London Bridge → Dartford (Southeastern)', t:'38 min'},
+        {mode:'walk', desc:'Dartford Station → Home', t:'12 min'},
+        {mode:'walk', desc:'Wait / change', t:'19 min'}
+      ]
+    }
+  ]
+};
+
+function isRushHour() {
+  const now = new Date();
+  const h = now.getHours(); const day = now.getDay();
+  if (day===0||day===6) return false;
+  return (h>=7&&h<10)||(h>=16&&h<20);
+}
+
+function selectRoute(r) {
+  currentRoute = r;
+  document.getElementById('btn-hw').classList.toggle('active', r==='hw');
+  document.getElementById('btn-wh').classList.toggle('active', r==='wh');
+  document.getElementById('lbl-origin').textContent = r==='hw' ? 'Dartford, DA12 RJ' : '17 Charterhouse St, EC1N 6RA';
+  document.getElementById('lbl-dest').textContent   = r==='hw' ? '17 Charterhouse St, EC1N 6RA' : 'Dartford, DA12 RJ';
+  document.getElementById('options-panel').classList.remove('show');
+  document.getElementById('detail-panel').classList.remove('show');
+}
+
+function showOptions() {
+  const rush = isRushHour();
+  const routes = ALL_ROUTES[currentRoute].map(r => ({
+    ...r, mins: rush ? Math.round(r.mins * 1.2) : r.mins
+  }));
+  routes.sort((a,b) => a.mins - b.mins);
+
+  const list = document.getElementById('opt-list');
+  list.innerHTML = '';
+  routes.forEach((r, i) => {
+    const card = document.createElement('div');
+    card.className = 'opt-card' + (i===0 ? ' fastest' : '');
+    const minsColor = r.mins > 80 ? 'slow' : '';
+    const changesTxt = r.changes === 1 ? '1 change' : r.changes + ' changes';
+    let legsHtml = r.legs.map(l =>
+      `<div class="opt-leg">
+        <div class="opt-leg-mode ${l.mode}">${l.mode.toUpperCase()}</div>
+        <div class="opt-leg-desc">${l.desc}</div>
+        <div class="opt-leg-t">${l.t}</div>
+      </div>`
+    ).join('<div class="arrow">↓</div>');
+
+    card.innerHTML = `
+      <div class="opt-top">
+        <div>
+          <div class="opt-mins ${minsColor}">${r.mins} min</div>
+          <div class="opt-label">${r.label}</div>
+        </div>
+        <div class="opt-changes">${changesTxt}</div>
+      </div>
+      <div class="opt-legs">${legsHtml}</div>`;
+    card.onclick = () => selectOption(r, card);
+    list.appendChild(card);
+  });
+
+  document.getElementById('options-panel').classList.add('show');
+  document.getElementById('detail-panel').classList.remove('show');
+  document.getElementById('opt-header').textContent = rush
+    ? '[ route options — rush hour · fastest to slowest ]'
+    : '[ route options — fastest to slowest ]';
+}
+
+function selectOption(r, card) {
+  document.querySelectorAll('.opt-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  document.getElementById('res-time').textContent = r.mins;
+  document.getElementById('res-route').textContent = currentRoute==='hw'
+    ? 'dartford grid  →  charterhouse sector  ·  ' + r.label.toLowerCase()
+    : 'charterhouse sector  →  dartford grid  ·  ' + r.label.toLowerCase();
+  document.getElementById('detail-panel').classList.add('show');
+}
+
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById('clock').innerHTML = `${String(h).padStart(2,'0')}<span class="blink">:</span>${m}<span class="blink">:</span>${s}`;
+  document.getElementById('ampm').textContent = ampm;
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clockday').textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
+  const ri = document.getElementById('rush-indicator');
+  ri.innerHTML = isRushHour()
+    ? '<div class="rush-tag">⚡ rush hour — journey times extended</div>'
+    : '<div class="normal-tag">normal service hours</div>';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+const canvas = document.getElementById('grid');
+const ctx = canvas.getContext('2d');
+let W, H, trails=[], particles=[];
+function resize(){W=canvas.width=canvas.offsetWidth;H=canvas.height=canvas.offsetHeight}
+function initTrails(){
+  trails=[];
+  for(let i=0;i<6;i++)trails.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-0.5)*1.2,vy:(Math.random()-0.5)*1.2,cyan:Math.random()>0.4,len:40+Math.random()*60,history:[]});
+  particles=[];
+  for(let i=0;i<20;i++)particles.push({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*1.5,cyan:Math.random()>0.5,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3});
+}
+function drawGrid(){
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(0,80,100,0.18)';ctx.lineWidth=0.5;
+  const gs=32;
+  for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  trails.forEach(t=>{
+    t.history.push({x:t.x,y:t.y});
+    if(t.history.length>t.len)t.history.shift();
+    t.x+=t.vx;t.y+=t.vy;
+    if(t.x<0||t.x>W)t.vx*=-1;if(t.y<0||t.y>H)t.vy*=-1;
+    for(let i=1;i<t.history.length;i++){
+      const a=i/t.history.length;
+      ctx.beginPath();
+      ctx.strokeStyle=t.cyan?`rgba(0,255,255,${a*0.7})`:`rgba(255,102,0,${a*0.7})`;
+      ctx.lineWidth=a*2;
+      ctx.moveTo(t.history[i-1].x,t.history[i-1].y);ctx.lineTo(t.history[i].x,t.history[i].y);ctx.stroke();
+    }
+    ctx.beginPath();ctx.arc(t.x,t.y,2,0,Math.PI*2);
+    ctx.fillStyle=t.cyan?'rgba(0,255,255,0.95)':'rgba(255,102,0,0.95)';ctx.fill();
+  });
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.cyan?'rgba(0,255,255,0.5)':'rgba(255,100,0,0.5)';ctx.fill();
+  });
+  requestAnimationFrame(drawGrid);
+}
+resize();initTrails();drawGrid();
+window.addEventListener('resize',()=>{resize();initTrails()});
+</script>
